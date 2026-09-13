@@ -8,7 +8,12 @@ import CreateDebateForm from "./components/CreateDebateForm";
 import DebateBrowser from "./components/DebateBrowser";
 import DebateDetail from "./components/DebateDetail";
 import RecentActivity from "./components/RecentActivity";
-import { connectWallet, getConnectedAddress, restoreWalletConnection } from "./lib/client";
+import {
+  connectWallet,
+  disconnectWallet,
+  getConnectedAddress,
+  restoreWalletConnection,
+} from "./lib/client";
 import { getStats } from "./lib/contract";
 import type { Stats } from "./lib/types";
 
@@ -72,11 +77,8 @@ export default function App() {
   }
 
   function handleDisconnect() {
+    disconnectWallet();
     setAddress(null);
-    if (typeof window !== "undefined") {
-      window.sessionStorage.removeItem("agorastake_connected_address");
-      window.localStorage.removeItem("agorastake_connected_address");
-    }
   }
 
   function bump() {
