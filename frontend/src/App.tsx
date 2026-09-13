@@ -71,6 +71,14 @@ export default function App() {
     }
   }
 
+  function handleDisconnect() {
+    setAddress(null);
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem("agorastake_connected_address");
+      window.localStorage.removeItem("agorastake_connected_address");
+    }
+  }
+
   function bump() {
     setRefreshToken((n) => n + 1);
   }
@@ -85,7 +93,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <Header address={address} connecting={connecting} onConnect={handleConnect} onNavigate={scrollTo} />
+      <Header
+        address={address}
+        connecting={connecting}
+        onConnect={handleConnect}
+        onDisconnect={handleDisconnect}
+        onNavigate={scrollTo}
+      />
 
       <Hero stats={stats} onLaunch={() => scrollTo("app")} onLearnMore={() => scrollTo("how-it-works")} />
 
