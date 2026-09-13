@@ -1,4 +1,4 @@
-import { Github, Menu, Scale, Twitter, Wallet, X as CloseIcon } from "lucide-react";
+import { Github, LogOut, Menu, Scale, Twitter, Wallet, X as CloseIcon } from "lucide-react";
 import { useState } from "react";
 import { GITHUB_URL, TWITTER_URL } from "../lib/links";
 
@@ -6,6 +6,7 @@ interface HeaderProps {
   address: string | null;
   connecting: boolean;
   onConnect: () => void;
+  onDisconnect?: () => void;
   onNavigate: (id: string) => void;
 }
 
@@ -19,7 +20,13 @@ const NAV_LINKS = [
   { id: "about", label: "About" },
 ];
 
-export default function Header({ address, connecting, onConnect, onNavigate }: HeaderProps) {
+export default function Header({
+  address,
+  connecting,
+  onConnect,
+  onDisconnect,
+  onNavigate,
+}: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   function navigate(id: string) {
@@ -75,16 +82,34 @@ export default function Header({ address, connecting, onConnect, onNavigate }: H
             <Twitter className="h-5 w-5" />
           </a>
 
-          <button
-            onClick={onConnect}
-            disabled={connecting}
-            className="flex items-center gap-2 rounded-lg border border-agora-border bg-agora-panel px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-agora-accent disabled:opacity-60"
-          >
-            <Wallet className="h-4 w-4" />
-            <span className="hidden sm:inline">
-              {address ? shorten(address) : connecting ? "Connecting…" : "Connect wallet"}
-            </span>
-          </button>
+          {address ? (
+            <div className="flex items-center gap-1.5 rounded-lg border border-agora-border bg-agora-panel p-1 pl-3">
+              <span className="flex items-center gap-2 text-sm font-medium text-slate-100">
+                <Wallet className="h-4 w-4 text-emerald-400" />
+                <span>{shorten(address)}</span>
+              </span>
+              {onDisconnect && (
+                <button
+                  onClick={onDisconnect}
+                  className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-rose-400 transition hover:bg-rose-500/10 hover:text-rose-300"
+                  title="Disconnect wallet"
+                  type="button"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Disconnect</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={onConnect}
+              disabled={connecting}
+              className="flex items-center gap-2 rounded-lg border border-agora-border bg-agora-panel px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-agora-accent disabled:opacity-60"
+            >
+              <Wallet className="h-4 w-4" />
+              <span>{connecting ? "Connecting…" : "Connect wallet"}</span>
+            </button>
+          )}
 
           <button
             className="text-slate-300 md:hidden"
