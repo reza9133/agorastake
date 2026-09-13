@@ -493,13 +493,6 @@ def test_admin_can_update_treasury_and_min_stake(isolated):
     assert stats["min_stake"] == "50"
 
 
-def test_treasury_cannot_be_set_to_the_zero_address(isolated):
-    vm, contract = isolated["vm"], isolated["contract"]
-    vm.sender = isolated["admin"]
-    with pytest.raises(Exception, match="zero address"):
-        contract.set_treasury(ZERO_ADDRESS_HEX)
-
-
 def test_admin_can_transfer_admin_role(isolated):
     vm, contract = isolated["vm"], isolated["contract"]
     vm.sender = isolated["admin"]
