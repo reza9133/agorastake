@@ -289,23 +289,26 @@ runs inside the Intelligent Contract itself.
   or a slow server degrades to "no evidence was available" rather than
   reverting the whole resolution — the debate is still judged on the
   argument text itself.
-- **`set_treasury` rejects the zero address.** `_pay()` silently no-ops on
-  a zero-address recipient (by design, so a debate with no challenger yet
-  doesn't try to pay one) — but that means a treasury accidentally set to
-  the zero address would swallow every protocol fee forever with no error.
-  `set_treasury` now refuses that outright. The treasury is set to the
-  deployer's own address at construction time and is never zero unless an
-  admin deliberately sets it that way, so this is a guard against a future
-  mistake, not a fix for anything the live Studionet instance has hit.
+- **`_pay()` silently no-ops on a zero-address recipient by design** — a
+  debate with no challenger yet has `challenger == ZERO_ADDRESS`, and
+  refund/payout paths would otherwise try to pay it. The same silent
+  no-op applies to `treasury`: `set_treasury` does **not** currently guard
+  against being set to the zero address, so a mistaken call there would
+  swallow every future protocol fee with no error at all. The treasury is
+  set to the deployer's own address at construction and stays that way
+  unless an admin deliberately changes it, so this hasn't affected the
+  live deployment — but if you're operating this contract, simply never
+  call `set_treasury` with the zero address. (A guard was drafted and then
+  reverted here specifically to keep this repository's source matching
+  the bytecode already live at `0x35BfFc75e4661Cb05bc91468616E2A301547722B`
+  exactly, rather than let the two drift apart — see the note below.)
 
 ## Fixed since the initial Studionet deployment
 
-A few gaps surfaced in review after the contract above was already live —
-noted here rather than quietly folded in, since the deployed bytecode at
-`0x35BfFc75e4661Cb05bc91468616E2A301547722B` predates all of them and
-can't pick any of this up without a redeploy (the contract doesn't
-implement GenVM's [upgradability](https://docs.genlayer.com/developers/intelligent-contracts/features/upgradability)
-feature):
+Two gaps surfaced in review after the contract above was already live.
+Both were fixed **in the frontend only** — they don't touch the contract's
+ABI, so they apply immediately against the already-deployed instance with
+no redeploy needed:
 
 - **The frontend now actually uses `get_wallet_debates` and
   `get_audit_log`.** Both were defined in `contract.ts` from the start but
@@ -326,8 +329,18 @@ feature):
   `stats.paused` as a visible banner instead of only failing at
   submission time with the contract's `"debate creation is paused"`
   error.
-- **`set_treasury` rejects the zero address** (contract-side fix, see
-  above).
+
+A `set_treasury` zero-address guard was drafted for the contract during
+the same review, but deliberately **reverted** — adding it would have made
+this repository's `contracts/agora_stake.py` diverge from the source that
+actually produced the bytecode at
+`0x35BfFc75e4661Cb05bc91468616E2A301547722B`, silently, since the
+contract has no upgrade path and a source-only change there does nothing
+for a contract already deployed. Keeping the repo an exact match for
+what's live took priority over a cosmetic hardening; see the note in
+*Design notes and honest limitations* above for the operational
+mitigation instead. If this contract is redeployed fresh, re-adding that
+guard is a one-line, well-understood change.
 
 ## License
 
