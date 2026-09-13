@@ -609,12 +609,7 @@ Respond with ONLY this JSON object, no other text:
     @gl.public.write
     def set_treasury(self, new_treasury: str) -> None:
         self._require_admin()
-        treasury = Address(new_treasury)
-        if treasury == ZERO_ADDRESS:
-            raise gl.vm.UserError(
-                f"{ERR_EXPECTED} treasury cannot be the zero address"
-            )
-        self.treasury = treasury
+        self.treasury = Address(new_treasury)
         self._record(u256(0), "ADMIN_TREASURY", f"treasury set to {new_treasury}")
 
     @gl.public.write
