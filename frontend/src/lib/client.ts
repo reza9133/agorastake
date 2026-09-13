@@ -12,6 +12,7 @@ const NETWORK = (import.meta.env.VITE_NETWORK as ChainName | undefined) ?? "stud
 const CHAIN = CHAINS[NETWORK] ?? studionet;
 
 const STORAGE_KEY = "agorastake.connectedAddress";
+const DISCONNECT_FLAG = "agorastake.manualDisconnect";
 
 declare global {
   interface Window {
@@ -28,13 +29,20 @@ export const readClient = createClient({ chain: CHAIN });
 
 let writeClient: ReturnType<typeof createClient> | null = null;
 let connectedAddress: string | null =
-  typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
+  typeof window !== "undefined" && window.localStorage.getItem(DISCONNECT_FLAG) !== "true"
+    ? window.localStorage.getItem(STORAGE_KEY)
+    : null;
 
 function rememberAddress(address: string | null) {
   connectedAddress = address;
   if (typeof window === "undefined") return;
-  if (address) window.localStorage.setItem(STORAGE_KEY, address);
-  else window.localStorage.removeItem(STORAGE_KEY);
+  if (address) {
+    window.localStorage.setItem(STORAGE_KEY, address);
+    window.localStorage.removeItem(DISCONNECT_FLAG);
+  } else {
+    window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.setItem(DISCONNECT_FLAG, "true");
+  }
 }
 
 function buildWriteClient(address: `0x${string}`) {
@@ -47,6 +55,9 @@ function buildWriteClient(address: `0x${string}`) {
 }
 
 export function getConnectedAddress(): string | null {
+  if (typeof window !== "undefined" && window.localStorage.getItem(DISCONNECT_FLAG) === "true") {
+    return null;
+  }
   return connectedAddress;
 }
 
@@ -61,6 +72,10 @@ export function getWriteClient(): ReturnType<typeof createClient> {
 export async function connectWallet(): Promise<string> {
   if (!window.ethereum) {
     throw new Error("No injected wallet found. Install MetaMask or a compatible wallet.");
+  }
+
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(DISCONNECT_FLAG);
   }
 
   const accounts = (await window.ethereum.request({
@@ -89,6 +104,10 @@ export async function connectWallet(): Promise<string> {
 
 export async function restoreWalletConnection(): Promise<string | null> {
   if (!window.ethereum) return null;
+  if (typeof window !== "undefined" && window.localStorage.getItem(DISCONNECT_FLAG) === "true") {
+    return null;
+  }
+
   const remembered = getConnectedAddress();
   if (!remembered) return null;
 
